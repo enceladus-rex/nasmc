@@ -3,8 +3,14 @@ import torch
 from torch.utils.tensorboard import SummaryWriter
 from torch.utils.data import DataLoader
 
+from torch import autograd
+
+import time
 import os
 import fire
+import random
+
+import numpy as np
 
 from nasmc.models import NonlinearSSM, NonlinearSSMProposal
 from nasmc.datasets import NonlinearSSMDataset
@@ -14,12 +20,20 @@ from nasmc.filters import nonlinear_ssm_smc
 class NASMCTrainer:
     def run(self,
             run_dir: str = './runs/',
-            lr: float = 1e-3,
-            num_steps: int = 1000,
+            lr: float = 1e-4,
+            num_steps: int = 1,
             save_decimation: int = 100,
             num_particles: int = 100,
             sequence_length: int = 1000,
-            batch_size: int = 32):
+            batch_size: int = 1,
+            cuda_id: int = -1,
+            seed: int = 95):
+        np.random.seed(seed)
+        random.seed(seed)
+        torch.manual_seed(seed)
+        torch.cuda.manual_seed(seed)
+        torch.cuda.manual_seed_all(seed)
+
         os.makedirs(run_dir, exist_ok=True)
         checkpoint_path = os.path.join(run_dir, 'checkpoint.pt')
 
@@ -40,32 +54,40 @@ class NASMCTrainer:
         proposal.train()
         model.train()
 
+        if cuda_id >= 0:
+            proposal.cuda(cuda_id)
+            model.cuda(cuda_id)
+
         summary_writer = SummaryWriter(run_dir)
 
         dl = DataLoader(NonlinearSSMDataset(model, sequence_length),
-                        batch_size=batch_size)
+                        batch_size=batch_size,
+                        num_workers=1)
         for i, example in zip(range(num_steps), dl):
-            smc_result = nonlinear_ssm_smc(proposal, model,
-                                           example.observations, num_particles)
+            observations = example.observations
+            if cuda_id >= 0:
+                observations = observations.cuda(cuda_id)
 
-            smc_result.weights.detach()
-            loss = F.sum(smc_result.weights *
-                         smc_result.proposal_log_probs) / batch_size
+            smc_result = nonlinear_ssm_smc(proposal, model,
+                                           observations, num_particles)
+
+            loss = -torch.sum(smc_result.weights *
+                              smc_result.proposal_log_probs) / batch_size
 
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()
 
-            summary_writer.write('loss/train', loss, step)
+            summary_writer.add_scalar('loss/train', loss, step)
 
-            print('step =', step, 'loss =', loss)
+            print('time =', time.time(), '- step =', step, '- loss =', loss)
 
             step += 1
             if step % save_decimation == 0:
                 torch.save(
                     dict(proposal=proposal,
-                         model=model,
-                         optimizer=optimizer,
+                         model=model.state_dict(),
+                         optimizer=optimizer.state_dict(),
                          step=step,
                          num_particles=num_particles,
                          sequence_length=sequence_length), checkpoint_path)
@@ -74,8 +96,8 @@ class NASMCTrainer:
 
         torch.save(
             dict(proposal=proposal,
-                 model=model,
-                 optimizer=optimizer,
+                 model=model.state_dict(),
+                 optimizer=optimizer.state_dict(),
                  step=step,
                  num_particles=num_particles,
                  sequence_length=sequence_length), checkpoint_path)

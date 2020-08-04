@@ -39,10 +39,13 @@ class NonlinearSSMProposal(nn.Module):
         mixture = F.softmax(mixture_logits, dim=-1)
 
         means = self.means_linear(hidden)[..., None]
+
         stddev = F.softplus(self.stddev_linear(hidden))[..., None]
 
-        return D.MixtureSameFamily(D.Categorical(mixture),
-                                   D.Independent(D.Normal(means, stddev), 1))
+        c = D.Categorical(probs=mixture)
+        n = D.Independent(D.Normal(means, stddev), 1)
+
+        return D.MixtureSameFamily(c, n)
 
     def parameterize_prior(
         self, observation: torch.Tensor
@@ -66,12 +69,12 @@ class NonlinearSSM(nn.Module):
                                        sigma: float = 1.) -> D.Distribution:
         return D.Normal(state * state / 20., sigma)
 
-    def parameterize_prior_model(self):
-        return D.Normal(torch.tensor([0.]), torch.tensor([5.]))
+    def parameterize_prior_model(self, device=None):
+        return D.Normal(torch.tensor([0.], device=device), torch.tensor([sqrt(5)], device=device))
 
     def parameterize_transition_model(
         self, state: torch.Tensor, timestep: int,
         sigma: float = sqrt(10.)) -> D.Distribution:
         return D.Normal(
             state / 2. + 25 * state / (1 + state * state) +
-            8 * torch.cos(1.2 * torch.as_tensor(timestep)), sigma)
+            8 * torch.cos(1.2 * torch.as_tensor(timestep, device=state.device)), sigma)
