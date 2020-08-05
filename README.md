@@ -94,7 +94,7 @@ and improves the sample efficiency of Monte Carlo methods.
 ### Key Contributions
 
 * Proposed a gradient-based black-box adaptive SMC method that automatically tunes flexible proposal distributions using the inclusive KL-divergence between the target and proposal distributions.
-* Significantly outperformed exiting adaptive proposal methods such as EKPF and UPF on standard benchmarks.
+* Significantly outperformed existing adaptive proposal methods such as EKPF and UPF on standard benchmarks.
 * Showed the method is applicable to higher-dimensional and more complex models.
 
 ### Approach
@@ -123,7 +123,7 @@ q(z_{1:t} | x_{1:t}) = q(z_1|x_1)\prod_{t=2}^{T}q(z_t|z_{1:t-1}, x_{1:t})
 -->
 
 At each time step, the proposal distribution is sampled from and the importance weights are computed for
-each of these samples. After the first time step, however, this is preceeded by an initial resampling 
+each of these samples. After the first time step, however, this is preceded by an initial resampling 
 step that is used to ensure that existing samples remain effective.
 
 The loss function is an approximation of the KL-divergence between the proposal and the target distributions.

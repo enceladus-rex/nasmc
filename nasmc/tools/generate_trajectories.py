@@ -32,6 +32,9 @@ def generate_trajectories(*,
     proposal.load_state_dict(checkpoint['proposal'])
     model.load_state_dict(checkpoint['model'])
 
+    proposal.eval()
+    model.eval()
+
     data = []
     data_loader = DataLoader(NonlinearSSMDataset(
         model, sequence_length=sequence_length),
