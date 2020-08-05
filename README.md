@@ -104,7 +104,7 @@ The problem setting involves a model consisting of states denoted by <i>z<sub>t<
 <i>p(z<sub>1:t</sub> | x<sub>1:t</sub>)</i>. Using the chain rule of probability, the joint distribution,
 which is an unnormalized posterior, can be factorized as:
 
-<img alt="Equation 7" src="images/equations-8.png" height="60px" />
+<img alt="Equation 7" src="images/equations-8.png" width="425px" />
 
 <!--
 
@@ -114,7 +114,7 @@ p(z_{1:t}, x_{1:t}) = p(z_1)p(x_1|z_1)\prod_{t=2}^{T}p(z_t|z_{1:t-1})p(x_t|z_{1:
 
 The proposal distribution used in the paper follows a similar factorization:
 
-<img alt="Equation 7" src="images/equations-9.png" height="60px" />
+<img alt="Equation 7" src="images/equations-9.png" width="300px" />
 
 <!--
 
@@ -129,7 +129,9 @@ step that is used to ensure that existing samples remain effective.
 The loss function is an approximation of the KL-divergence between the proposal and the target distributions.
 Specifically, its derivative follows from the following steps:
 
-<img alt="Equation 9" src="images/equations-10.png" height="170px" />
+![Equation 9](images/equations-10.png =170x100)
+
+<img alt="Equation 9" src="images/equations-10.png" width="700px" />
 
 <!--
 
@@ -143,7 +145,7 @@ The final step involves substituting the filtering distribution <i>p(z<sub>1:t</
 approximation since there is an error incurred, however, this approach allows the integral to be directly
 approximated by using the intermediate importance weights of the SMC filter:
 
-<img alt="Equation 10" src="images/equations-11.png" height="60px" />
+<img alt="Equation 10" src="images/equations-11.png" width="700px" />
 
 <!--
 
@@ -153,7 +155,7 @@ approximated by using the intermediate importance weights of the SMC filter:
 
 In place of the integral, we can then instead use importance sampling resulting in the final expression:
 
-<img alt="Equation 11" src="images/equations-12.png" height="60px" />
+<img alt="Equation 11" src="images/equations-12.png" width="700px" />
 
 <!--
 
@@ -168,7 +170,7 @@ Note that the <i>w</i> are the importance weights for each of the <i>N</i> parti
 Finally, a similar expression is also used to formulate the derivative of the maximum likelihood loss 
 over the model <i>p</i>:
 
-<img alt="Equation 12" src="images/equations-13.png" height="60px" />
+<img alt="Equation 12" src="images/equations-13.png" width="450px" />
 
 <!--
 
