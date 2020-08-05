@@ -70,11 +70,13 @@ class NonlinearSSM(nn.Module):
         return D.Normal(state * state / 20., sigma)
 
     def parameterize_prior_model(self, device=None):
-        return D.Normal(torch.tensor([0.], device=device), torch.tensor([sqrt(5)], device=device))
+        return D.Normal(torch.tensor([0.], device=device),
+                        torch.tensor([sqrt(5)], device=device))
 
     def parameterize_transition_model(
         self, state: torch.Tensor, timestep: int,
         sigma: float = sqrt(10.)) -> D.Distribution:
         return D.Normal(
-            state / 2. + 25 * state / (1 + state * state) +
-            8 * torch.cos(1.2 * torch.as_tensor(timestep, device=state.device)), sigma)
+            state / 2. + 25 * state / (1 + state * state) + 8 *
+            torch.cos(1.2 * torch.as_tensor(timestep, device=state.device)),
+            sigma)

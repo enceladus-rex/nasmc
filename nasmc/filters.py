@@ -33,8 +33,10 @@ def nonlinear_ssm_smc(proposal: NonlinearSSMProposal, model: NonlinearSSM,
 
     current_observations = observations[None, :,
                                         0, :].repeat(num_particles, 1, 1)
-    proposal_d, lstm_state = proposal.parameterize_prior(current_observations.detach())
-    transition_model = model.parameterize_prior_model(device=observations.device)
+    proposal_d, lstm_state = proposal.parameterize_prior(
+        current_observations.detach())
+    transition_model = model.parameterize_prior_model(
+        device=observations.device)
     current_states = proposal_d.sample()
 
     observation_model = model.parameterize_observation_model(current_states)
@@ -62,8 +64,9 @@ def nonlinear_ssm_smc(proposal: NonlinearSSMProposal, model: NonlinearSSM,
 
         resampled_trajectories = torch.gather(
             final_trajectories, 0,
-            ancestors[..., None, None].repeat(1, 1, final_trajectories.shape[-2],
-                                              final_trajectories.shape[-1]))
+            ancestors[..., None,
+                      None].repeat(1, 1, final_trajectories.shape[-2],
+                                   final_trajectories.shape[-1]))
         resampled_lstm_h = torch.gather(
             lstm_state[0], 0,
             ancestors[..., None].repeat(1, 1, lstm_state[0].shape[-1]))
@@ -75,7 +78,8 @@ def nonlinear_ssm_smc(proposal: NonlinearSSMProposal, model: NonlinearSSM,
         previous_states = resampled_trajectories[..., i - 1, :]
 
         proposal_d, lstm_state = proposal.parameterize_posterior(
-            previous_states, current_observations.detach(), resampled_lstm_state)
+            previous_states, current_observations.detach(),
+            resampled_lstm_state)
         transition_model = model.parameterize_transition_model(
             previous_states, i + 1)
         current_states = proposal_d.sample()
@@ -85,15 +89,19 @@ def nonlinear_ssm_smc(proposal: NonlinearSSMProposal, model: NonlinearSSM,
 
         transition_prob = transition_model.log_prob(current_states).exp()
         proposal_prob = proposal_d.log_prob(current_states)[..., None].exp()
-        observation_prob = observation_model.log_prob(current_observations).exp()
+        observation_prob = observation_model.log_prob(
+            current_observations).exp()
 
-        current_weights = transition_prob * observation_prob / (proposal_prob + 1e-8)
-        current_weights = current_weights / (torch.sum(
-            current_weights, dim=0, keepdims=True) + 1e-7)
+        current_weights = transition_prob * observation_prob / (proposal_prob +
+                                                                1e-8)
+        current_weights = current_weights / (
+            torch.sum(current_weights, dim=0, keepdims=True) + 1e-7)
         current_weights = current_weights[..., None, :]
         total_weights = torch.sum(current_weights, dim=0, keepdims=True)
         valid_weights = total_weights > 1e-2
-        current_weights = current_weights.where(valid_weights, torch.ones_like(current_weights) / num_particles)
+        current_weights = current_weights.where(
+            valid_weights,
+            torch.ones_like(current_weights) / num_particles)
 
         current_trajectories = current_states[..., None, :]
 
@@ -109,9 +117,8 @@ def nonlinear_ssm_smc(proposal: NonlinearSSMProposal, model: NonlinearSSM,
         proposal_log_probs = torch.cat(
             [proposal_log_probs, current_proposal_log_probs], dim=-2)
 
-    return SMCResult(
-            intermediate_weights=weights.detach(), 
-            intermediate_proposal_log_probs=proposal_log_probs, 
-            intermediate_trajectories=intermediate_trajectories, 
-            final_trajectories=final_trajectories,
-            final_weights=weights[..., 0, :])
+    return SMCResult(intermediate_weights=weights.detach(),
+                     intermediate_proposal_log_probs=proposal_log_probs,
+                     intermediate_trajectories=intermediate_trajectories,
+                     final_trajectories=final_trajectories,
+                     final_weights=weights[..., 0, :])

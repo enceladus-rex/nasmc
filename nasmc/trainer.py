@@ -68,11 +68,12 @@ class NASMCTrainer:
             if cuda_id >= 0:
                 observations = observations.cuda(cuda_id)
 
-            smc_result = nonlinear_ssm_smc(proposal, model,
-                                           observations, num_particles)
+            smc_result = nonlinear_ssm_smc(proposal, model, observations,
+                                           num_particles)
 
-            loss = -torch.sum(smc_result.intermediate_weights *
-                              smc_result.intermediate_proposal_log_probs) / batch_size
+            loss = -torch.sum(
+                smc_result.intermediate_weights *
+                smc_result.intermediate_proposal_log_probs) / batch_size
 
             optimizer.zero_grad()
             loss.backward()
