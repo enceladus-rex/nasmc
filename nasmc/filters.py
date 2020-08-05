@@ -7,9 +7,11 @@ from nasmc.models import NonlinearSSMProposal, NonlinearSSM
 
 
 class SMCResult(NamedTuple):
-    trajectories: torch.Tensor
-    weights: torch.Tensor
-    proposal_log_probs: torch.Tensor
+    intermediate_weights: torch.Tensor
+    intermediate_proposal_log_probs: torch.Tensor
+    intermediate_trajectories: torch.Tensor
+    final_trajectories: torch.Tensor
+    final_weights: torch.Tensor
 
 
 def nonlinear_ssm_smc(proposal: NonlinearSSMProposal, model: NonlinearSSM,
@@ -19,8 +21,10 @@ def nonlinear_ssm_smc(proposal: NonlinearSSMProposal, model: NonlinearSSM,
     #
     # Observations: [batch_size, sequence_length, obs_dim]
     # Weights: [num_particles, batch_size, num_timesteps, 1]
+    # Final Weights: [num_particles, batch_size, 1]
     # LSTM State: [num_particles, batch_size, hidden_dim]
-    # Trajectories: [num_particles, batch_size, num_timesteps, state_dim]
+    # Intermediate Trajectories: [num_particles, batch_size, num_timesteps, state_dim]
+    # Final Trajectories: [num_particles, batch_size, num_timesteps, state_dim]
     # Current States: [num_particles, batch_size, state_dim]
     # Current Observations: [num_particles, batch_size, obs_dim]
     # Proposal Log Probabilities: [num_particles, batch_size, num_timesteps, 1]
@@ -46,7 +50,8 @@ def nonlinear_ssm_smc(proposal: NonlinearSSMProposal, model: NonlinearSSM,
     proposal_log_probs = proposal_d.log_prob(current_states)
     proposal_log_probs = proposal_log_probs[..., None, None]
 
-    trajectories = current_states[..., None, :]
+    intermediate_trajectories = current_states[..., None, :]
+    final_trajectories = current_states[..., None, :]
 
     for i in range(1, seq_len):
         current_observations = observations[None, :,
@@ -56,18 +61,9 @@ def nonlinear_ssm_smc(proposal: NonlinearSSMProposal, model: NonlinearSSM,
         ancestors = ancestor_d.sample((num_particles, ))
 
         resampled_trajectories = torch.gather(
-            trajectories, 0,
-            ancestors[..., None, None].repeat(1, 1, trajectories.shape[-2],
-                                              trajectories.shape[-1]))
-        resampled_weights = torch.gather(
-            weights, 0, ancestors[..., None,
-                                  None].repeat(1, 1, weights.shape[-2],
-                                               weights.shape[-1]))
-        resampled_proposal_log_probs = torch.gather(
-            proposal_log_probs, 0,
-            ancestors[..., None,
-                      None].repeat(1, 1, proposal_log_probs.shape[-2],
-                                   proposal_log_probs.shape[-1]))
+            final_trajectories, 0,
+            ancestors[..., None, None].repeat(1, 1, final_trajectories.shape[-2],
+                                              final_trajectories.shape[-1]))
         resampled_lstm_h = torch.gather(
             lstm_state[0], 0,
             ancestors[..., None].repeat(1, 1, lstm_state[0].shape[-1]))
@@ -106,9 +102,16 @@ def nonlinear_ssm_smc(proposal: NonlinearSSMProposal, model: NonlinearSSM,
                                                                 None]
 
         weights = torch.cat([weights, current_weights], dim=-2)
-        trajectories = torch.cat(
-            [trajectories, current_trajectories], dim=-2)
+        intermediate_trajectories = torch.cat(
+            [intermediate_trajectories, current_trajectories], dim=-2)
+        final_trajectories = torch.cat(
+            [resampled_trajectories, current_trajectories], dim=-2)
         proposal_log_probs = torch.cat(
             [proposal_log_probs, current_proposal_log_probs], dim=-2)
 
-    return SMCResult(trajectories, weights.detach(), proposal_log_probs)
+    return SMCResult(
+            intermediate_weights=weights.detach(), 
+            intermediate_proposal_log_probs=proposal_log_probs, 
+            intermediate_trajectories=intermediate_trajectories, 
+            final_trajectories=final_trajectories,
+            final_weights=weights[..., 0, :])

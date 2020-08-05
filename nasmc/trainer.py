@@ -20,11 +20,11 @@ from nasmc.filters import nonlinear_ssm_smc
 class NASMCTrainer:
     def run(self,
             run_dir: str = './runs/',
-            lr: float = 1e-4,
+            lr: float = 3e-3,
             num_steps: int = 1,
             save_decimation: int = 100,
-            num_particles: int = 100,
-            sequence_length: int = 1000,
+            num_particles: int = 1000,
+            sequence_length: int = 50,
             batch_size: int = 1,
             cuda_id: int = -1,
             seed: int = 95):
@@ -44,7 +44,7 @@ class NASMCTrainer:
 
         if os.path.exists(checkpoint_path):
             checkpoint = torch.load(checkpoint_path)
-            proposal = checkpoint['proposal']
+            proposal.load_state_dict(checkpoint['proposal'])
             model.load_state_dict(checkpoint['model'])
             optimizer.load_state_dict(checkpoint['optimizer'])
             step = checkpoint['step']
@@ -71,8 +71,8 @@ class NASMCTrainer:
             smc_result = nonlinear_ssm_smc(proposal, model,
                                            observations, num_particles)
 
-            loss = -torch.sum(smc_result.weights *
-                              smc_result.proposal_log_probs) / batch_size
+            loss = -torch.sum(smc_result.intermediate_weights *
+                              smc_result.intermediate_proposal_log_probs) / batch_size
 
             optimizer.zero_grad()
             loss.backward()
@@ -85,7 +85,7 @@ class NASMCTrainer:
             step += 1
             if step % save_decimation == 0:
                 torch.save(
-                    dict(proposal=proposal,
+                    dict(proposal=proposal.state_dict(),
                          model=model.state_dict(),
                          optimizer=optimizer.state_dict(),
                          step=step,
@@ -95,7 +95,7 @@ class NASMCTrainer:
         summary_writer.flush()
 
         torch.save(
-            dict(proposal=proposal,
+            dict(proposal=proposal.state_dict(),
                  model=model.state_dict(),
                  optimizer=optimizer.state_dict(),
                  step=step,

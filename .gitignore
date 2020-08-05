@@ -1,6 +1,8 @@
 .vscode/
 .DS_Store
 runs/
+*.swp
+*.swo
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
