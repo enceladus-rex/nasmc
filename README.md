@@ -129,8 +129,6 @@ step that is used to ensure that existing samples remain effective.
 The loss function is an approximation of the KL-divergence between the proposal and the target distributions.
 Specifically, its derivative follows from the following steps:
 
-![Equation 9](images/equations-10.png =170x100)
-
 <img alt="Equation 9" src="images/equations-10.png" width="700px" />
 
 <!--
