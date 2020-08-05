@@ -58,7 +58,7 @@ Note setting <i>f(x) = 1</i> yields:
 
 resulting in:
 
-<img alt="Equation 5" src="images/equations-6.png" style="max-height: 60px" />
+<img alt="Equation 5" src="images/equations-6.png" height="60px" />
 
 <!--
 
