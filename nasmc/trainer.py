@@ -26,7 +26,7 @@ class NASMCTrainer:
             num_particles: int = 1000,
             sequence_length: int = 50,
             batch_size: int = 1,
-            cuda_id: int = -1,
+            device_name: str = 'cpu',
             seed: int = 95):
         np.random.seed(seed)
         random.seed(seed)
@@ -37,13 +37,18 @@ class NASMCTrainer:
         os.makedirs(run_dir, exist_ok=True)
         checkpoint_path = os.path.join(run_dir, 'checkpoint.pt')
 
+        device = torch.device(device_name)
+
         proposal = NonlinearSSMProposal()
         model = NonlinearSSM()
         optimizer = torch.optim.Adam(proposal.parameters(), lr=lr)
         step = 1
 
+        proposal.to(device)
+        model.to(device)
+
         if os.path.exists(checkpoint_path):
-            checkpoint = torch.load(checkpoint_path)
+            checkpoint = torch.load(checkpoint_path, map_location=device)
             proposal.load_state_dict(checkpoint['proposal'])
             model.load_state_dict(checkpoint['model'])
             optimizer.load_state_dict(checkpoint['optimizer'])
@@ -54,10 +59,6 @@ class NASMCTrainer:
         proposal.train()
         model.train()
 
-        if cuda_id >= 0:
-            proposal.cuda(cuda_id)
-            model.cuda(cuda_id)
-
         summary_writer = SummaryWriter(run_dir)
 
         dl = DataLoader(NonlinearSSMDataset(model, sequence_length),
@@ -65,8 +66,7 @@ class NASMCTrainer:
                         num_workers=1)
         for i, example in zip(range(num_steps), dl):
             observations = example.observations
-            if cuda_id >= 0:
-                observations = observations.cuda(cuda_id)
+            observations = observations.to(device)
 
             smc_result = nonlinear_ssm_smc(proposal, model, observations,
                                            num_particles)
