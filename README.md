@@ -14,7 +14,7 @@ this is then done simply by taking the mean of the function applied to those sam
 For example, given a set of `N` samples from some distribution `x ~ Q(X)`, one can approximate `Q(X > y)`
 as:
 
-<img alt="Equation 1" src="images/equations-0.png" height="60px" />
+<img alt="Equation 1" src="images/equations-0.png" width="425px" />
 
 <!--
     \int q(x)  I\{x_i > y\} \approx \frac{1}{N} \sum_{x_i \sim q}^{N} I\{x_i > y\}
@@ -27,7 +27,7 @@ method that is used in these cases and allows one to separate the proposal distr
 the samples, from the target distribution, which is the distribution under which Monte Carlo integration is
 being carried out. This is done with a relatively straightforward update to the original approximation:
 
-<img alt="Equation 2" src="images/equations-2.png" height="125px" />
+<img alt="Equation 2" src="images/equations-2.png" width="350px" />
 
 <!--
     \int p(x) f(x)dx = \int \frac{q(x)}{q(x)}p(x)f(x)dx = \int \frac{p(x)}{q(x)}q(x)f(x)dx \approx \frac{1}{N} \sum_{x_i \sim q}^{N} \frac{p(x_i)}{q(x_i)} f(x_i)
@@ -38,7 +38,7 @@ many real-world cases:
 
 Taking <i>p(x) = p'(x) / Z<sub>p</sub></i> and <i>q(x) = q'(x) / Z<sub>q</sub></i>
 
-<img alt="Equation 3" src="images/equations-4.png" height="170px" />
+<img alt="Equation 3" src="images/equations-4.png" width="375px" />
 
 <!--
 
@@ -48,7 +48,7 @@ Taking <i>p(x) = p'(x) / Z<sub>p</sub></i> and <i>q(x) = q'(x) / Z<sub>q</sub></
 
 Note setting <i>f(x) = 1</i> yields:
 
-<img alt="Equation 4" src="images/equations-5.png" height="60px" />
+<img alt="Equation 4" src="images/equations-5.png" width="275px" />
 
 <!--
 
@@ -58,7 +58,7 @@ Note setting <i>f(x) = 1</i> yields:
 
 resulting in:
 
-<img alt="Equation 5" src="images/equations-6.png" height="60px" />
+<img alt="Equation 5" src="images/equations-6.png" width="150px" />
 
 <!--
 
@@ -68,7 +68,7 @@ resulting in:
 
 The final approximation is therefore:
 
-<img alt="Equation 6" src="images/equations-7.png" height="60px" />
+<img alt="Equation 6" src="images/equations-7.png" width="290px" />
 
 <!--
 
